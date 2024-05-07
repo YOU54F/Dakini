@@ -148,7 +148,7 @@ declare -r targets=(
 )
 
 for target in "${targets[@]}"; do
-	declare url="https://cdn.netbsd.org/pub/NetBSD/NetBSD-8.0/${target}/binary/sets"
+	declare url="https://web.archive.org/web/0if_/https://archive.netbsd.org/pub/NetBSD-archive/NetBSD-8.0/${target}/binary/sets"
 	
 	case "${target}" in
 		amd64)
@@ -179,8 +179,23 @@ for target in "${targets[@]}"; do
 	declare base_output="/tmp/$(basename "${base_url}")"
 	declare comp_output="/tmp/$(basename "${comp_url}")"
 	
-	wget --no-verbose "${base_url}" --output-document="${base_output}"
-	wget --no-verbose "${comp_url}" --output-document="${comp_output}"
+	curl \
+		--url "${base_url}" \
+		--retry '30' \
+		--retry-all-errors \
+		--retry-delay '0' \
+		--retry-max-time '0' \
+		--verbose \
+		--output "${base_output}"
+	
+	curl \
+		--url "${comp_url}" \
+		--retry '30' \
+		--retry-all-errors \
+		--retry-delay '0' \
+		--retry-max-time '0' \
+		--verbose \
+		--output "${comp_output}"
 	
 	cd "${binutils_directory}/build"
 	rm --force --recursive ./*
