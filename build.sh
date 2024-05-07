@@ -19,12 +19,12 @@ declare -r binutils_tarball='/tmp/binutils.tar.xz'
 declare -r binutils_directory='/tmp/binutils-2.41'
 
 declare -r gcc_tarball='/tmp/gcc.tar.xz'
-declare -r gcc_directory='/tmp/gcc-12.3.0'
+declare -r gcc_directory='/tmp/gcc-14.1.0'
 
 declare -r optflags='-Os'
 declare -r linkflags='-Wl,-s'
 
-declare -r max_jobs="$(($(nproc) * 8))"
+declare -r max_jobs="$(($(nproc) * 12))"
 
 declare build_type="${1}"
 
@@ -69,7 +69,7 @@ if ! [ -f "${binutils_tarball}" ]; then
 fi
 
 if ! [ -f "${gcc_tarball}" ]; then
-	wget --no-verbose 'https://ftp.gnu.org/gnu/gcc/gcc-12.3.0/gcc-12.3.0.tar.xz' --output-document="${gcc_tarball}"
+	wget --no-verbose 'https://ftp.gnu.org/gnu/gcc/gcc-14.1.0/gcc-14.1.0.tar.xz' --output-document="${gcc_tarball}"
 	tar --directory="$(dirname "${gcc_directory}")" --extract --file="${gcc_tarball}"
 fi
 
@@ -236,7 +236,7 @@ for target in "${targets[@]}"; do
 		--with-mpfr="${toolchain_directory}" \
 		--with-bugurl='https://github.com/AmanoTeam/Dakini/issues' \
 		--with-gcc-major-version-only \
-		--with-pkgversion="Dakini v0.4-${revision}" \
+		--with-pkgversion="Dakini v0.5-${revision}" \
 		--with-sysroot="${toolchain_directory}/${triplet}" \
 		--with-native-system-header-dir='/include' \
 		--enable-__cxa_atexit \
