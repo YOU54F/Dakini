@@ -51,7 +51,7 @@ jobs:
       if: matrix.os == 'macos-latest'
       run: |
         export SDKROOT=$(xcrun --show-sdk-path)
-        ./build.sh ${{ github.env.build_host }}
+        ./build.sh ${{ env.build_host }}
     - name: Build Loki with OBGGCC
       if: matrix.os == 'macos-12'
       run: |
@@ -59,7 +59,7 @@ jobs:
         ./build.sh x86_64-apple-darwin
     - name: Generate tarball
       run: |
-        declare tarball_filename='/tmp/${{ github.env.build_host }}.tar.xz'
+        declare tarball_filename='/tmp/${{ env.build_host }}.tar.xz'
         tar --directory='/tmp' --create --file=- 'loki' | xz --threads='0' --compress -9 > "${tarball_filename}"
         sha256sum "${tarball_filename}" | sed 's|/tmp/||' > "${tarball_filename}.sha256"
     - name: Upload artifact
@@ -68,5 +68,5 @@ jobs:
         name: cross-toolchain
         if-no-files-found: error
         path: |
-          /tmp/${{ github.env.build_host }}.tar.xz
-          /tmp/${{ github.env.build_host }}.tar.xz.sha256
+          /tmp/${{ env.build_host }}.tar.xz
+          /tmp/${{ env.build_host }}.tar.xz.sha256
