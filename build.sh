@@ -185,6 +185,7 @@ for target in "${targets[@]}"; do
 		--retry-max-time '0' \
 		--location \
 		--verbose \
+		--silent \
 		--output "${base_output}"
 	
 	curl \
@@ -195,6 +196,7 @@ for target in "${targets[@]}"; do
 		--retry-max-time '0' \
 		--location \
 		--verbose \
+		--silent \
 		--output "${comp_output}"
 	
 	cd "${binutils_directory}/build"
@@ -222,7 +224,7 @@ for target in "${targets[@]}"; do
 	tar --directory="${toolchain_directory}/${triplet}" --strip=2 --extract --file="${comp_output}" './usr/lib' './usr/include'
 	
 	cd "${gcc_directory}/build"
-	
+	sed -i /LIB2ADD_ST/d "${gcc_directory}/libgcc/config/pa/t-netbsd"
 	rm --force --recursive ./*
 	
 	declare extra_configure_flags=''
