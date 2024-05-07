@@ -24,7 +24,11 @@ declare -r gcc_directory='/tmp/gcc-12.3.0'
 declare -r optflags='-Os'
 declare -r linkflags='-Wl,-s'
 
-declare -r max_jobs="$(($(nproc) * 8))"
+if [ "$(uname -s)" == 'Darwin' ]; then
+	declare -r max_jobs="$(($(sysctl -n hw.ncpu) * 8))"
+else
+	declare -r max_jobs="$(($(nproc) * 12))"
+fi
 
 declare build_type="${1}"
 
@@ -38,15 +42,22 @@ if [ "${build_type}" == 'native' ]; then
 	is_native='1'
 fi
 
-declare OBGGCC_TOOLCHAIN='/tmp/obggcc-toolchain'
+if [ "$(uname -s)" != 'Darwin' ]; then
+	declare OBGGCC_TOOLCHAIN='/tmp/obggcc-toolchain'
+fi
 declare CROSS_COMPILE_TRIPLET=''
 
 declare cross_compile_flags=''
 
 if ! (( is_native )); then
-	source "./submodules/obggcc/toolchains/${build_type}.sh"
-	cross_compile_flags+="--host=${CROSS_COMPILE_TRIPLET}"
+	if [ "$(uname -s)" != 'Darwin' ]; then
+		source "./submodules/obggcc/toolchains/${build_type}.sh"
+	elif [ "$(uname -s)" == 'Darwin' ]; then
+		CROSS_COMPILE_TRIPLET=$build_type
+	fi
+	cross_compile_flags+="--host=${CROSS_COMPILE_TRIPLET} --build=${CROSS_COMPILE_TRIPLET} "
 fi
+echo "Cross compile flags: ${cross_compile_flags}"
 
 if ! [ -f "${gmp_tarball}" ]; then
 	wget --no-verbose 'https://ftp.gnu.org/gnu/gmp/gmp-6.2.1.tar.xz' --output-document="${gmp_tarball}"
@@ -76,11 +87,16 @@ fi
 [ -d "${gcc_directory}/build" ] || mkdir "${gcc_directory}/build"
 
 declare -r toolchain_directory="/tmp/dakini"
+cp binutils-apple-silicon.patch /tmp
 
 [ -d "${gmp_directory}/build" ] || mkdir "${gmp_directory}/build"
 
 cd "${gmp_directory}/build"
-rm --force --recursive ./*
+if [ "$(uname -s)" == 'Darwin' ]; then
+	rm -rf ./*
+else
+	rm --force --recursive ./*
+fi
 
 ../configure \
 	--prefix="${toolchain_directory}" \
@@ -97,7 +113,11 @@ make install
 [ -d "${mpfr_directory}/build" ] || mkdir "${mpfr_directory}/build"
 
 cd "${mpfr_directory}/build"
-rm --force --recursive ./*
+if [ "$(uname -s)" == 'Darwin' ]; then
+	rm -rf ./*
+else
+	rm --force --recursive ./*
+fi
 
 ../configure \
 	--prefix="${toolchain_directory}" \
@@ -115,7 +135,11 @@ make install
 [ -d "${mpc_directory}/build" ] || mkdir "${mpc_directory}/build"
 
 cd "${mpc_directory}/build"
-rm --force --recursive ./*
+if [ "$(uname -s)" == 'Darwin' ]; then
+	rm -rf ./*
+else
+	rm --force --recursive ./*
+fi
 
 ../configure \
 	--prefix="${toolchain_directory}" \
@@ -130,25 +154,30 @@ rm --force --recursive ./*
 make all --jobs="${max_jobs}"
 make install
 
-sed -i 's/#include <stdint.h>/#include <stdint.h>\n#include <stdio.h>/g' "${toolchain_directory}/include/mpc.h"
+# sed cmd modified for macos
+if [ "$(uname -s)" == 'Darwin' ]; then
+	sed -i '' 's/#include <stdint.h>/#include <stdint.h>\n#include <stdio.h>/g' "${toolchain_directory}/include/mpc.h"
+else
+	sed -i 's/#include <stdint.h>/#include <stdint.h>\n#include <stdio.h>/g' "${toolchain_directory}/include/mpc.h"
+fi
 
 [ -d "${binutils_directory}/build" ] || mkdir "${binutils_directory}/build"
 
 declare -r targets=(
-	'hppa'
+	# 'hppa'
 	'amd64'
-	'i386'
-	'emips'
-	'alpha'
-	'sparc'
-	'sparc64'
-	'vax'
-	'hpcsh'
-	'evbppc'
+	# 'i386'
+	# 'emips'
+	# 'alpha'
+	# 'sparc'
+	# 'sparc64'
+	# 'vax'
+	# 'hpcsh'
+	# 'evbppc'
 )
 
 for target in "${targets[@]}"; do
-	declare url="https://cdn.netbsd.org/pub/NetBSD/NetBSD-8.0/${target}/binary/sets"
+	declare url="https://archive.netbsd.org/pub/NetBSD-archive/NetBSD-8.0/${target}/binary/sets"
 	
 	case "${target}" in
 		amd64)
@@ -182,8 +211,23 @@ for target in "${targets[@]}"; do
 	wget --no-verbose "${base_url}" --output-document="${base_output}"
 	wget --no-verbose "${comp_url}" --output-document="${comp_output}"
 	
+	# Apply patches requires for Apple Silicon
+	if [ "$(uname -s)" == 'Darwin' ]; then
+		cd "${binutils_directory}"
+		# Only apply patch if required, as this loops for multiple targets
+		if patch --forward -p1 --dry-run < /tmp/binutils-apple-silicon.patch; then
+			patch --forward -p1 < /tmp/binutils-apple-silicon.patch
+		else
+			true
+		fi
+	fi
 	cd "${binutils_directory}/build"
-	rm --force --recursive ./*
+	if [ "$(uname -s)" == 'Darwin' ]; then
+		rm -rf ./*
+	else
+		rm --force --recursive ./*
+	fi
+
 	
 	../configure \
 		--target="${triplet}" \
@@ -208,7 +252,11 @@ for target in "${targets[@]}"; do
 	
 	cd "${gcc_directory}/build"
 	
-	rm --force --recursive ./*
+	if [ "$(uname -s)" == 'Darwin' ]; then
+		rm -rf ./*
+	else
+		rm --force --recursive ./*
+	fi
 	
 	declare extra_configure_flags=''
 	
@@ -225,6 +273,12 @@ for target in "${targets[@]}"; do
 	
 	if [ "${target}" == 'hpcsh' ]; then
 		CXXFLAGS_FOR_TARGET+=' -include sh3/fenv.h'
+	fi
+
+	if [ "$(uname -s)" != 'Darwin' ]; then
+		declare extra_ld_flags=LDFLAGS="-Wl,-rpath-link,${OBGGCC_TOOLCHAIN}/${CROSS_COMPILE_TRIPLET}/lib ${linkflags}"
+	else 
+		declare extra_ld_flags=''
 	fi
 	
 	../configure \
@@ -266,7 +320,7 @@ for target in "${targets[@]}"; do
 		${extra_configure_flags} \
 		CFLAGS="${optflags}" \
 		CXXFLAGS="${optflags}" \
-		LDFLAGS="-Wl,-rpath-link,${OBGGCC_TOOLCHAIN}/${CROSS_COMPILE_TRIPLET}/lib ${linkflags}"
+		"${extra_ld_flags}"
 	
 	LD_LIBRARY_PATH="${toolchain_directory}/lib" PATH="${PATH}:${toolchain_directory}/bin" make \
 		CFLAGS_FOR_TARGET="${CFLAGS_FOR_TARGET}" \
@@ -281,10 +335,33 @@ for target in "${targets[@]}"; do
 		ln -s "../../bin/${triplet}-${name}" "${name}"
 	done
 	
-	rm --recursive "${toolchain_directory}/share"
-	rm --recursive "${toolchain_directory}/lib/gcc/${triplet}/"*"/include-fixed"
-	
-	patchelf --add-rpath '$ORIGIN/../../../../lib' "${toolchain_directory}/libexec/gcc/${triplet}/"*"/cc1"
-	patchelf --add-rpath '$ORIGIN/../../../../lib' "${toolchain_directory}/libexec/gcc/${triplet}/"*"/cc1plus"
-	patchelf --add-rpath '$ORIGIN/../../../../lib' "${toolchain_directory}/libexec/gcc/${triplet}/"*"/lto1"
+	if [ "$(uname -s)" == 'Darwin' ]; then
+		rm -r "${toolchain_directory}/share"
+		rm -r "${toolchain_directory}/lib/gcc/${triplet}/"*"/include-fixed"
+	else
+		rm --recursive "${toolchain_directory}/share"
+		rm --recursive "${toolchain_directory}/lib/gcc/${triplet}/"*"/include-fixed"
+	fi
+	if [ "$(uname -s)" == 'Darwin' ]; then
+		file "${toolchain_directory}/libexec/gcc/${triplet}/"*"/cc1"
+		file "${toolchain_directory}/libexec/gcc/${triplet}/"*"/cc1plus"
+		file "${toolchain_directory}/libexec/gcc/${triplet}/"*"/lto1"
+		otool -L "${toolchain_directory}/libexec/gcc/${triplet}/"*"/cc1"
+		otool -L  "${toolchain_directory}/libexec/gcc/${triplet}/"*"/cc1plus"
+		otool -L  "${toolchain_directory}/libexec/gcc/${triplet}/"*"/lto1"
+
+		for binary in "${toolchain_directory}/libexec/gcc/${triplet}/"*"/cc1" "${toolchain_directory}/libexec/gcc/${triplet}/"*"/cc1plus" "${toolchain_directory}/libexec/gcc/${triplet}/"*"/lto1"; do
+			for dep in $(otool -L "${binary}" | awk -v dir="${toolchain_directory}" '$0 ~ dir {print $1}'); do
+				install_name_tool -change "${dep}" "@loader_path/../../../../lib/$(basename "${dep}")" "${binary}"
+			done
+		done
+
+		otool -L "${toolchain_directory}/libexec/gcc/${triplet}/"*"/cc1"
+		otool -L  "${toolchain_directory}/libexec/gcc/${triplet}/"*"/cc1plus"
+		otool -L  "${toolchain_directory}/libexec/gcc/${triplet}/"*"/lto1"
+	else
+		patchelf --add-rpath '$ORIGIN/../../../../lib' "${toolchain_directory}/libexec/gcc/${triplet}/"*"/cc1"
+		patchelf --add-rpath '$ORIGIN/../../../../lib' "${toolchain_directory}/libexec/gcc/${triplet}/"*"/cc1plus"
+		patchelf --add-rpath '$ORIGIN/../../../../lib' "${toolchain_directory}/libexec/gcc/${triplet}/"*"/lto1"
+	fi
 done
