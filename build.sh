@@ -185,6 +185,7 @@ for target in "${targets[@]}"; do
 		--retry-all-errors \
 		--retry-delay '0' \
 		--retry-max-time '0' \
+		--location \
 		--verbose \
 		--output "${base_output}"
 	
@@ -194,6 +195,7 @@ for target in "${targets[@]}"; do
 		--retry-all-errors \
 		--retry-delay '0' \
 		--retry-max-time '0' \
+		--location \
 		--verbose \
 		--output "${comp_output}"
 	
