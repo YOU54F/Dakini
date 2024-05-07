@@ -52,11 +52,6 @@ jobs:
       run: |
         export SDKROOT=$(xcrun --show-sdk-path)
         ./build.sh ${{ env.build_host }}
-    - name: Build Loki with OBGGCC
-      if: matrix.os == 'macos-12'
-      run: |
-        export SDKROOT=$(xcrun --show-sdk-path)
-        ./build.sh x86_64-apple-darwin
     - name: Generate tarball
       run: |
         declare tarball_filename='/tmp/${{ env.build_host }}.tar.xz'
