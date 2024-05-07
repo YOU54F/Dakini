@@ -55,7 +55,7 @@ jobs:
       run: |
         declare tarball_filename='/tmp/${{ env.build_host }}.tar.xz'
         tar --directory='/tmp' --create --file=- 'dakini' | xz --threads='0' --compress -9 > "${tarball_filename}"
-        sha256sum "${tarball_filename}" | sed 's|/tmp/||' > "${tarball_filename}.sha256"
+        shasum -a 256 "${tarball_filename}" | sed 's|/tmp/||' > "${tarball_filename}.sha256"
     - name: Upload artifact
       uses: actions/upload-artifact@main
       with:
