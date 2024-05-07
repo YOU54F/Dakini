@@ -18,9 +18,9 @@ jobs:
         # ]
       fail-fast: false
     steps:
-    # - uses: actions/checkout@main
-    #   with:
-    #     submodules: true
+    - uses: actions/checkout@main
+      with:
+        submodules: true
     - name: Install MacOS toolchain
       if: runner.os == 'MacOS'
       run: |
