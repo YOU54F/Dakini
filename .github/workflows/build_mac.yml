@@ -48,14 +48,13 @@ jobs:
     - name: check xcode root
       run: xcrun --show-sdk-path
     - name: Build Loki with OBGGCC
-      if: matrix.os == 'macos-latest'
       run: |
         export SDKROOT=$(xcrun --show-sdk-path)
         ./build.sh ${{ env.build_host }}
     - name: Generate tarball
       run: |
         declare tarball_filename='/tmp/${{ env.build_host }}.tar.xz'
-        tar --directory='/tmp' --create --file=- 'loki' | xz --threads='0' --compress -9 > "${tarball_filename}"
+        tar --directory='/tmp' --create --file=- 'dakini' | xz --threads='0' --compress -9 > "${tarball_filename}"
         sha256sum "${tarball_filename}" | sed 's|/tmp/||' > "${tarball_filename}.sha256"
     - name: Upload artifact
       uses: actions/upload-artifact@main
