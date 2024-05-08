@@ -54,12 +54,13 @@ jobs:
     - name: Generate tarball
       run: |
         declare tarball_filename='/tmp/${{ env.build_host }}.tar.xz'
+        set -o pipefail
         tar --directory='/tmp' --create --file=- 'dakini' | xz --threads='0' --compress -9 > "${tarball_filename}"
         shasum -a 256 "${tarball_filename}" | sed 's|/tmp/||' > "${tarball_filename}.sha256"
     - name: Upload artifact
       uses: actions/upload-artifact@main
       with:
-        name: cross-toolchain
+        name: cross-toolchain-${{ env.build_host }}
         if-no-files-found: error
         path: |
           /tmp/${{ env.build_host }}.tar.xz
