@@ -54,8 +54,9 @@ if ! (( is_native )); then
 		source "./submodules/obggcc/toolchains/${build_type}.sh"
 	elif [ "$(uname -s)" == 'Darwin' ]; then
 		CROSS_COMPILE_TRIPLET=$build_type
+		cross_compile_flags+="--build=${CROSS_COMPILE_TRIPLET} "
 	fi
-	cross_compile_flags+="--host=${CROSS_COMPILE_TRIPLET} --build=${CROSS_COMPILE_TRIPLET} "
+	cross_compile_flags+="--host=${CROSS_COMPILE_TRIPLET}"
 fi
 echo "Cross compile flags: ${cross_compile_flags}"
 
