@@ -165,16 +165,16 @@ fi
 [ -d "${binutils_directory}/build" ] || mkdir "${binutils_directory}/build"
 
 declare -r targets=(
-	# 'hppa'
+	'hppa'
 	'amd64'
-	# 'i386'
-	# 'emips'
-	# 'alpha'
-	# 'sparc'
-	# 'sparc64'
-	# 'vax'
-	# 'hpcsh'
-	# 'evbppc'
+	'i386'
+	'emips'
+	'alpha'
+	'sparc'
+	'sparc64'
+	'vax'
+	'hpcsh'
+	'evbppc'
 )
 
 for target in "${targets[@]}"; do
