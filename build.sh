@@ -88,7 +88,8 @@ fi
 [ -d "${gcc_directory}/build" ] || mkdir "${gcc_directory}/build"
 
 declare -r toolchain_directory="/tmp/dakini"
-cp binutils-apple-silicon.patch /tmp
+mkdir -p /tmp/patches
+cp -r patches/* /tmp/patches
 
 [ -d "${gmp_directory}/build" ] || mkdir "${gmp_directory}/build"
 
@@ -165,24 +166,27 @@ fi
 [ -d "${binutils_directory}/build" ] || mkdir "${binutils_directory}/build"
 
 declare -r targets=(
-	'hppa'
-	'amd64'
-	'i386'
-	'emips'
-	'alpha'
-	'sparc'
-	'sparc64'
-	'vax'
-	'hpcsh'
-	'evbppc'
+	'evbarm-aarch64'
+	# 'hppa'
+	# 'amd64'
+	# 'i386'
+	# 'emips'
+	# 'alpha'
+	# 'sparc'
+	# 'sparc64'
+	# 'vax'
+	# 'hpcsh'
+	# 'evbppc'
 )
 
 for target in "${targets[@]}"; do
-	declare url="https://archive.netbsd.org/pub/NetBSD-archive/NetBSD-8.0/${target}/binary/sets"
+	declare url="https://cdn.netbsd.org/pub/NetBSD/NetBSD-9.0/${target}/binary/sets"
 	
 	case "${target}" in
 		amd64)
 			declare triplet='x86_64-unknown-netbsd';;
+		evbarm-aarch64)
+			declare triplet='aarch64-unknown-netbsd';;
 		i386)
 			declare triplet='i386-unknown-netbsdelf';;
 		emips)
@@ -215,12 +219,10 @@ for target in "${targets[@]}"; do
 	# Apply patches requires for Apple Silicon
 	if [ "$(uname -s)" == 'Darwin' ]; then
 		cd "${binutils_directory}"
-		# Only apply patch if required, as this loops for multiple targets
-		if patch --forward -p1 --dry-run < /tmp/binutils-apple-silicon.patch; then
-			patch --forward -p1 < /tmp/binutils-apple-silicon.patch
-		else
-			true
-		fi
+		for patch in /tmp/patches/binutils/*; do
+			echo "Applying patch: ${patch}"
+			patch --forward -p1 < "${patch}" || true
+		done	
 	fi
 	cd "${binutils_directory}/build"
 	if [ "$(uname -s)" == 'Darwin' ]; then
@@ -251,6 +253,11 @@ for target in "${targets[@]}"; do
 	tar --directory="${toolchain_directory}/${triplet}" --extract --file="${base_output}"  './lib'
 	tar --directory="${toolchain_directory}/${triplet}" --strip=2 --extract --file="${comp_output}" './usr/lib' './usr/include'
 	
+	cd "${gcc_directory}"
+	for patch in /tmp/patches/gcc/*; do
+		echo "Applying patch: ${patch}"
+		patch --forward -p1 < "${patch}" || true
+	done
 	cd "${gcc_directory}/build"
 	
 	if [ "$(uname -s)" == 'Darwin' ]; then

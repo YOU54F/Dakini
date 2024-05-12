@@ -1,0 +1,11 @@
+--- a/gcc/config.host	2022-05-06 07:30:56.000000000 +0000
++++ b/gcc/config.host
+@@ -99,7 +99,7 @@ case ${host} in
+ esac
+ 
+ case ${host} in
+-  aarch64*-*-freebsd* | aarch64*-*-linux* | aarch64*-*-fuchsia* |\
++  aarch64*-*-freebsd* | aarch64*-*-netbsd* | aarch64*-*-linux* | aarch64*-*-fuchsia* |\
+   aarch64*-*-darwin*)
+     case ${target} in
+       aarch64*-*-*)

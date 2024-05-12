@@ -1,0 +1,23 @@
+--- a/ld/configure.tgt
++++ b/ld/configure.tgt
+@@ -94,6 +94,9 @@ aarch64-*-cloudabi*)	targ_emul=aarch64cloudabi
+ aarch64-*-freebsd*)	targ_emul=aarch64fbsd
+ 			targ_extra_emuls="aarch64fbsdb aarch64elf"
+ 			;;
++aarch64-*-netbsd*)    targ_emul=aarch64nbsd
++			 targ_extra_emuls="aarch64nbsdb aarch64elf aarch64elfb"
++            ;;
+ aarch64-*-fuchsia*)	targ_emul=aarch64elf
+ 			targ_extra_emuls="aarch64elfb armelf armelfb"
+ 			;;
+--- a/ld/Makefile.in
++++ b/ld/Makefile.in
+@@ -888,6 +888,8 @@ ALL_64_EMULATION_SOURCES = \
+ 	eaarch64linux32.c \
+ 	eaarch64linux32b.c \
+ 	eaarch64linuxb.c \
++	eaarch64nbsd.c \
++   eaarch64nbsdb.c \
+ 	eaarch64nto.c \
+ 	eaarch64pe.c \
+ 	earm64pe.c \

@@ -1,0 +1,11 @@
+--- a/libffi/configure	2022-05-06 07:31:19.000000000 +0000
++++ b/libffi/configure
+@@ -16155,7 +16155,7 @@ case "$target" in
+ $as_echo "#define FFI_EXEC_TRAMPOLINE_TABLE 1" >>confdefs.h
+ 
+      ;;
+-     *-apple-* | *-*-freebsd* | *-*-kfreebsd* | *-*-openbsd* | *-pc-solaris* | *-linux-android*)
++     *-apple-* | *-*-freebsd* | *-*-kfreebsd* | *-*-netbsd* | *-*-openbsd* | *-pc-solaris* | *-linux-android*)
+ 
+ $as_echo "#define FFI_MMAP_EXEC_WRIT 1" >>confdefs.h
+ 
